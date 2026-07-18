@@ -14,10 +14,11 @@
 
 1. Клонируй репозиторий:
 ```bash
-git clone https://github.com/твой-логин/image-enhancer.git
+git clone https://github.com/ZeroUzer/image-enhancer.git
 cd image-enhancer
 
 2. Создай виртуальное окружение и установи зависимости:
+
 python -m venv venv
 venv\Scripts\activate  # Windows
 pip install -r requirements.txt
