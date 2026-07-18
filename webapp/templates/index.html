@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Улучшение изображений</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f2f5;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 20px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .logo h1 {
+            font-size: 26px;
+            font-weight: 600;
+            color: #0f172a;
+            letter-spacing: -0.3px;
+        }
+
+        .logo span {
+            color: #3b7cff;
+        }
+
+        .logo p {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        .badge {
+            background: #eef2ff;
+            color: #3b7cff;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #dbe7fe;
+        }
+
+        .main {
+            flex: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 32px 24px 40px;
+            width: 100%;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 36px 32px 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+            border: 1px solid #f1f5f9;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 40px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            background: #fafbfc;
+        }
+
+        .upload-area:hover {
+            border-color: #3b7cff;
+            background: #f8faff;
+        }
+
+        .upload-area .icon {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 8px;
+            color: #94a3b8;
+        }
+
+        .upload-area p {
+            font-size: 17px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .upload-area .hint {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 6px;
+        }
+
+        .upload-area .formats {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 10px;
+            padding: 4px 14px;
+            background: #f1f5f9;
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        .upload-area .limit {
+            font-size: 13px;
+            color: #ef4444;
+            margin-top: 8px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Миниатюры */
+        .thumb-strip {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .thumb-item {
+            width: 100px;
+            cursor: pointer;
+            border-radius: 10px;
+            border: 2.5px solid transparent;
+            overflow: hidden;
+            transition: border-color 0.2s, transform 0.15s;
+            background: #f8fafc;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .thumb-item:hover {
+            transform: scale(1.03);
+        }
+
+        .thumb-item.active {
+            border-color: #1f6aff;
+            box-shadow: 0 0 0 3px rgba(31, 106, 255, 0.2);
+        }
+
+        .thumb-item img {
+            width: 100%;
+            height: 70px;
+            object-fit: cover;
+            display: block;
+            background: #e9edf4;
+        }
+
+        .thumb-item .thumb-label {
+            font-size: 10px;
+            padding: 2px 6px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: #ffffff;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .thumb-item .thumb-status {
+            font-size: 9px;
+            padding: 1px 6px;
+            text-align: center;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .thumb-item .thumb-status.done {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .thumb-item .thumb-status.processing {
+            background: #dbe7fe;
+            color: #1f6aff;
+        }
+
+        .thumb-item .thumb-status.error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .thumb-item .remove-thumb {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            cursor: pointer;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thumb-item .remove-thumb:hover {
+            background: #ef4444;
+        }
+
+        .thumb-item .progress-thumb {
+            height: 3px;
+            background: #e9edf4;
+            border-radius: 0 0 10px 10px;
+            overflow: hidden;
+        }
+
+        .thumb-item .progress-thumb .fill {
+            height: 100%;
+            background: #3b7cff;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .thumb-strip .empty {
+            color: #94a3b8;
+            font-size: 14px;
+            padding: 10px 0;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Превью "было / стало" */
+        .preview-box {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .preview-box .file-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .preview-box .file-status {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .comparison {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .comparison figure {
+            flex: 1 1 200px;
+            max-width: 400px;
+            margin: 0;
+        }
+
+        .comparison figcaption {
+            font-weight: 500;
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .comparison img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+            background: #f8fafc;
+            min-height: 120px;
+        }
+
+        .coeffs {
+            background: #f8fafc;
+            padding: 10px 24px;
+            border-radius: 40px;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            margin: 14px 0 16px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .coeffs span {
+            color: #3b7cff;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 32px;
+            border: none;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            text-decoration: none;
+            font-family: inherit;
+            letter-spacing: 0.2px;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .btn-primary {
+            background: #1f6aff;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(31, 106, 255, 0.25);
+        }
+        .btn-primary:hover {
+            background: #1351d6;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #334155;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+        }
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #475569;
+            border: 1.5px solid #d1d9e6;
+        }
+        .btn-outline:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-sm {
+            padding: 6px 16px;
+            font-size: 13px;
+        }
+
+        .footer {
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            padding: 18px 24px;
+            text-align: center;
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+        .mt-12 { margin-top: 12px; }
+        .flex-center { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+        @media (max-width: 600px) {
+            .header-content { flex-direction: column; align-items: flex-start; }
+            .card { padding: 20px 12px 24px; }
+            .upload-area { padding: 24px 12px; }
+            .thumb-item { width: 70px; }
+            .thumb-item img { height: 50px; }
+            .comparison figure { flex: 1 1 100%; max-width: 100%; }
+            .btn { padding: 8px 18px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>Image<span>Enhancer</span></h1>
+                <p>Автоматическая коррекция изображений</p>
+            </div>
+            <div class="badge">ML + Computer Vision</div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="card">
+
+            <!-- Зона загрузки -->
+            <div class="upload-area" id="dropZone">
+                <span class="icon">+</span>
+                <p>Загрузите изображения</p>
+                <p class="hint">Нажмите или перетащите файлы</p>
+                <span class="formats">JPG · PNG · BMP · TIFF · WEBP · JFIF</span>
+                <div class="limit">Максимум 10 файлов</div>
+                <input type="file" id="fileInput" accept="image/*" multiple>
+            </div>
+
+            <!-- Миниатюры -->
+            <div class="thumb-strip" id="thumbStrip">
+                <div class="empty" id="emptyThumbs">Нет загруженных изображений</div>
+            </div>
+
+            <!-- Превью "было / стало" -->
+            <div class="preview-box hidden" id="previewBox">
+                <div class="file-name" id="previewName">—</div>
+                <div class="file-status" id="previewStatus">Статус: ожидание</div>
+                <div class="comparison">
+                    <figure>
+                        <figcaption>Было</figcaption>
+                        <img id="originalImg" alt="До" src="">
+                    </figure>
+                    <figure>
+                        <figcaption>Стало</figcaption>
+                        <img id="resultImg" alt="После" src="">
+                    </figure>
+                </div>
+                <div class="flex-center">
+                    <div class="coeffs" id="coeffsDisplay">
+                        Яркость: <span id="valBright">—</span> &middot;
+                        Контраст: <span id="valContrast">—</span> &middot;
+                        Цветность: <span id="valSaturation">—</span>
+                    </div>
+                </div>
+                <div class="result-actions">
+                    <a id="downloadLink" download="enhanced.jpg" class="btn btn-primary hidden">Скачать</a>
+                    <button class="btn btn-secondary btn-sm" id="processAllBtn">Обработать все</button>
+                    <button class="btn btn-outline btn-sm" id="clearAllBtn">Очистить всё</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 ImageEnhancer · Обработка выполняется на стороне сервера с использованием нейросетевой модели</p>
+    </footer>
+
+    <script>
+        (function() {
+
+            const MAX_FILES = 10;
+
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const thumbStrip = document.getElementById('thumbStrip');
+            const emptyThumbs = document.getElementById('emptyThumbs');
+            const previewBox = document.getElementById('previewBox');
+            const previewName = document.getElementById('previewName');
+            const previewStatus = document.getElementById('previewStatus');
+            const originalImg = document.getElementById('originalImg');
+            const resultImg = document.getElementById('resultImg');
+            const valBright = document.getElementById('valBright');
+            const valContrast = document.getElementById('valContrast');
+            const valSaturation = document.getElementById('valSaturation');
+            const downloadLink = document.getElementById('downloadLink');
+            const processAllBtn = document.getElementById('processAllBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+
+            let files = [];
+            let selectedId = null;
+            let processing = false;
+
+            // ---- Загрузка ----
+            function openPicker() { fileInput.click(); }
+            dropZone.addEventListener('click', openPicker);
+
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files.length > 0) {
+                    for (let i = 0; i < this.files.length; i++) {
+                        addFile(this.files[i]);
+                    }
+                }
+                this.value = '';
+            });
+
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#1f6aff';
+                this.style.background = '#f5f9ff';
+            });
+            dropZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#cbd5e1';
+                this.style.background = '#fafbfc';
+            });
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#cbd5e1';
+                this.style.background = '#fafbfc';
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                        addFile(e.dataTransfer.files[i]);
+                    }
+                }
+            });
+
+            function addFile(file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Файл "' + file.name + '" не является изображением.');
+                    return;
+                }
+                if (files.length >= MAX_FILES) {
+                    alert('Максимум ' + MAX_FILES + ' файлов.');
+                    return;
+                }
+                const exists = files.some(f => f.name === file.name && f.size === file.size);
+                if (exists) {
+                    alert('Файл "' + file.name + '" уже добавлен.');
+                    return;
+                }
+
+                const entry = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                    file: file,
+                    name: file.name,
+                    size: file.size,
+                    status: 'pending',
+                    progress: 0,
+                    resultUrl: null,
+                    coeffs: null,
+                    error: null,
+                    taskId: null,
+                    thumb: null
+                };
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    entry.thumb = e.target.result;
+                    renderAll();
+                    if (files.length === 1) {
+                        selectFile(entry.id);
+                    }
+                };
+                reader.readAsDataURL(file);
+
+                files.push(entry);
+                renderAll();
+            }
+
+            function removeFile(id) {
+                if (processing) {
+                    alert('Дождитесь завершения обработки.');
+                    return;
+                }
+                const entry = files.find(f => f.id === id);
+                if (entry && entry.status === 'processing') {
+                    alert('Файл обрабатывается.');
+                    return;
+                }
+                files = files.filter(f => f.id !== id);
+                if (selectedId === id) {
+                    selectedId = null;
+                    previewBox.classList.add('hidden');
+                }
+                renderAll();
+                if (files.length > 0) {
+                    selectFile(files[0].id);
+                }
+            }
+
+            function clearAll() {
+                if (processing) {
+                    if (!confirm('Остановить обработку и очистить всё?')) return;
+                }
+                files.forEach(f => {
+                    if (f.taskId && f.status === 'processing') {
+                        fetch('/task/' + f.taskId, { method: 'DELETE' }).catch(() => {});
+                    }
+                });
+                files = [];
+                selectedId = null;
+                processing = false;
+                previewBox.classList.add('hidden');
+                renderAll();
+            }
+
+            // ---- Выбор файла ----
+            function selectFile(id) {
+                const entry = files.find(f => f.id === id);
+                if (!entry) return;
+                selectedId = id;
+                renderAll();
+
+                previewName.textContent = entry.name;
+                const statusMap = {
+                    'pending': 'Ожидание',
+                    'processing': 'Обработка...',
+                    'done': 'Готово',
+                    'error': 'Ошибка',
+                    'aborted': 'Отменено'
+                };
+                previewStatus.textContent = 'Статус: ' + (statusMap[entry.status] || entry.status);
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    originalImg.src = e.target.result;
+                };
+                reader.readAsDataURL(entry.file);
+
+                if (entry.status === 'done' && entry.resultUrl) {
+                    resultImg.src = entry.resultUrl;
+                    resultImg.style.display = 'block';
+                    const c = entry.coeffs || {};
+                    valBright.textContent = (c.brightness || 0).toFixed(2);
+                    valContrast.textContent = (c.contrast || 0).toFixed(2);
+                    valSaturation.textContent = (c.saturation || 0).toFixed(2);
+                    downloadLink.href = entry.resultUrl;
+                    downloadLink.classList.remove('hidden');
+                } else {
+                    resultImg.src = '';
+                    resultImg.style.display = 'none';
+                    valBright.textContent = '—';
+                    valContrast.textContent = '—';
+                    valSaturation.textContent = '—';
+                    downloadLink.classList.add('hidden');
+                }
+
+                previewBox.classList.remove('hidden');
+            }
+
+            // ---- Отрисовка ----
+            function renderAll() {
+                // Миниатюры
+                if (files.length === 0) {
+                    thumbStrip.innerHTML = '<div class="empty">Нет загруженных изображений</div>';
+                    return;
+                }
+
+                let html = '';
+                files.forEach(f => {
+                    const isActive = f.id === selectedId;
+                    let statusText = '';
+                    let statusClass = '';
+                    let progressHtml = '';
+                    if (f.status === 'pending') {
+                        statusText = 'Ожидание';
+                        statusClass = '';
+                    } else if (f.status === 'processing') {
+                        statusText = f.progress + '%';
+                        statusClass = 'processing';
+                        progressHtml = '<div class="progress-thumb"><div class="fill" style="width:' + f.progress +
+                            '%;"></div></div>';
+                    } else if (f.status === 'done') {
+                        statusText = 'Готово';
+                        statusClass = 'done';
+                    } else if (f.status === 'error') {
+                        statusText = 'Ошибка';
+                        statusClass = 'error';
+                    } else if (f.status === 'aborted') {
+                        statusText = 'Отменено';
+                        statusClass = '';
+                    }
+
+                    const thumbSrc = f.thumb || '';
+                    html += '<div class="thumb-item ' + (isActive ? 'active' : '') + '" data-id="' + f.id + '">' +
+                        '<button class="remove-thumb" data-id="' + f.id + '" title="Удалить">×</button>' +
+                        '<img src="' + thumbSrc + '" alt="' + f.name + '" loading="lazy">' +
+                        '<div class="thumb-label">' + f.name.substr(0, 14) + (f.name.length > 14 ? '…' : '') +
+                        '</div>' +
+                        '<div class="thumb-status ' + statusClass + '">' + statusText + '</div>' +
+                        progressHtml +
+                        '</div>';
+                });
+
+                thumbStrip.innerHTML = html;
+
+                // Клик по миниатюре
+                document.querySelectorAll('.thumb-item').forEach(el => {
+                    el.addEventListener('click', function(e) {
+                        const id = this.getAttribute('data-id');
+                        if (id) selectFile(id);
+                    });
+                });
+
+                // Удаление
+                document.querySelectorAll('.remove-thumb').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = this.getAttribute('data-id');
+                        removeFile(id);
+                    });
+                });
+
+                // Кнопка "Обработать все"
+                const hasPending = files.some(f => f.status === 'pending');
+                const hasProcessing = files.some(f => f.status === 'processing');
+                processAllBtn.disabled = !hasPending || hasProcessing || processing;
+            }
+
+            // ---- Обработка ----
+            processAllBtn.addEventListener('click', function() {
+                if (processing) return;
+                const pending = files.filter(f => f.status === 'pending');
+                if (pending.length === 0) {
+                    alert('Нет файлов для обработки.');
+                    return;
+                }
+                processing = true;
+                processNext();
+            });
+
+            function processNext() {
+                let next = null;
+                for (let i = 0; i < files.length; i++) {
+                    if (files[i].status === 'pending') {
+                        next = files[i];
+                        break;
+                    }
+                }
+                if (!next) {
+                    processing = false;
+                    renderAll();
+                    return;
+                }
+
+                const entry = next;
+                entry.status = 'processing';
+                entry.progress = 0;
+                renderAll();
+                if (selectedId === entry.id) selectFile(entry.id);
+
+                const formData = new FormData();
+                formData.append('file', entry.file);
+
+                fetch('/task', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        entry.status = 'error';
+                        entry.error = data.error;
+                        renderAll();
+                        if (selectedId === entry.id) selectFile(entry.id);
+                        processNext();
+                        return;
+                    }
+                    entry.taskId = data.task_id;
+                    pollStatus(entry);
+                })
+                .catch(err => {
+                    entry.status = 'error';
+                    entry.error = err;
+                    renderAll();
+                    if (selectedId === entry.id) selectFile(entry.id);
+                    processNext();
+                });
+            }
+
+            function pollStatus(entry) {
+                const timer = setInterval(() => {
+                    fetch('/task/' + entry.taskId + '/status')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.error) {
+                            clearInterval(timer);
+                            entry.status = 'error';
+                            entry.error = data.error;
+                            renderAll();
+                            if (selectedId === entry.id) selectFile(entry.id);
+                            processNext();
+                            return;
+                        }
+                        entry.progress = data.progress || 0;
+                        renderAll();
+                        if (selectedId === entry.id) selectFile(entry.id);
+
+                        if (data.status === 'done') {
+                            clearInterval(timer);
+                            entry.status = 'done';
+                            entry.resultUrl = data.result_url;
+                            entry.coeffs = data.coefficients;
+                            renderAll();
+                            if (selectedId === entry.id) selectFile(entry.id);
+                            processNext();
+                        } else if (data.status === 'error') {
+                            clearInterval(timer);
+                            entry.status = 'error';
+                            entry.error = data.error;
+                            renderAll();
+                            if (selectedId === entry.id) selectFile(entry.id);
+                            processNext();
+                        } else if (data.status === 'aborted') {
+                            clearInterval(timer);
+                            entry.status = 'aborted';
+                            renderAll();
+                            if (selectedId === entry.id) selectFile(entry.id);
+                            processNext();
+                        }
+                    })
+                    .catch(err => {
+                        clearInterval(timer);
+                        entry.status = 'error';
+                        entry.error = err;
+                        renderAll();
+                        if (selectedId === entry.id) selectFile(entry.id);
+                        processNext();
+                    });
+                }, 1000);
+            }
+
+            // ---- Кнопки ----
+            clearAllBtn.addEventListener('click', clearAll);
+
+            // Обновление превью при смене статуса
+            const origSelect = selectFile;
+            selectFile = function(id) {
+                origSelect(id);
+                const entry = files.find(f => f.id === id);
+                if (entry) {
+                    const statusMap = {
+                        'pending': 'Ожидание',
+                        'processing': 'Обработка...',
+                        'done': 'Готово',
+                        'error': 'Ошибка',
+                        'aborted': 'Отменено'
+                    };
+                    previewStatus.textContent = 'Статус: ' + (statusMap[entry.status] || entry.status);
+                }
+            };
+
+            // Автовыбор первого файла при загрузке
+            const origAdd = addFile;
+            addFile = function(file) {
+                origAdd(file);
+                if (files.length === 1) {
+                    selectFile(files[0].id);
+                }
+            };
+
+        })();
+    </script>
+
+</body>
+</html>

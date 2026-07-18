@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Image Enhancer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            text-align: center;
+            background: #f5f5f5;
+        }
+        .upload-area {
+            border: 3px dashed #3498db;
+            padding: 40px;
+            border-radius: 20px;
+            background: white;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background: #f0f8ff;
+        }
+        #preview {
+            margin: 20px 0;
+        }
+        #result {
+            margin: 20px 0;
+            display: none;
+        }
+        #result img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .coeffs {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+        .loader {
+            display: none;
+            margin: 20px 0;
+        }
+        .loader.active {
+            display: block;
+        }
+        .comparison {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .comparison img {
+            max-width: 45%;
+            border-radius: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Enhancement</h1>
+    <p>Upload a photo to automatically adjust brightness, contrast and saturation</p>
+    
+    <div class="upload-area" id="dropZone">
+        <p>Click or drag and drop a file</p>
+        <p style="font-size: 12px; color: #666;">Supported: JPG, PNG, BMP</p>
+        <input type="file" id="fileInput" style="display:none" accept=".jpg,.jpeg,.png,.bmp">
+    </div>
+    
+    <div id="preview" class="hidden">
+        <h3>Uploaded:</h3>
+        <img id="previewImg" style="max-width: 100%; max-height: 400px;">
+        <br><br>
+        <button class="btn" id="processBtn">Enhance</button>
+        <button class="btn" id="resetBtn" style="background: #95a5a6;">Cancel</button>
+    </div>
+    
+    <div class="loader" id="loader">Processing... (up to 30 seconds)</div>
+    
+    <div id="result" class="hidden">
+        <h3>Result:</h3>
+        <div class="comparison">
+            <div>
+                <p><b>Before</b></p>
+                <img id="originalImg">
+            </div>
+            <div>
+                <p><b>After</b></p>
+                <img id="resultImg">
+            </div>
+        </div>
+        <div class="coeffs" id="coeffsDisplay">Coefficients:</div>
+        <br><br>
+        <a id="downloadLink" download="enhanced.jpg" class="btn">Download</a>
+        <button class="btn" id="newBtn" style="background: #2ecc71;">New Photo</button>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const previewImg = document.getElementById('previewImg');
+        const processBtn = document.getElementById('processBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const loader = document.getElementById('loader');
+        const resultDiv = document.getElementById('result');
+        const originalImg = document.getElementById('originalImg');
+        const resultImg = document.getElementById('resultImg');
+        const coeffsDisplay = document.getElementById('coeffsDisplay');
+        const downloadLink = document.getElementById('downloadLink');
+        const newBtn = document.getElementById('newBtn');
+        
+        let currentFile = null;
+        let currentResultUrl = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#2ecc71';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#3498db';
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#3498db';
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/bmp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Only JPG, PNG and BMP are supported');
+                return;
+            }
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                preview.classList.remove('hidden');
+                dropZone.style.display = 'none';
+                resultDiv.classList.add('hidden');
+                loader.classList.remove('active');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        processBtn.addEventListener('click', () => {
+            if (!currentFile) return;
+            
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            
+            loader.classList.add('active');
+            processBtn.disabled = true;
+            resultDiv.classList.add('hidden');
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loader.classList.remove('active');
+                processBtn.disabled = false;
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                currentResultUrl = data.result_url;
+                originalImg.src = previewImg.src;
+                resultImg.src = data.result_url;
+                resultDiv.classList.remove('hidden');
+                
+                const c = data.coefficients;
+                coeffsDisplay.textContent = 'Coefficients: Brightness ' + c.brightness + ', Contrast ' + c.contrast + ', Saturation ' + c.saturation;
+                downloadLink.href = data.result_url;
+            })
+            .catch(error => {
+                loader.classList.remove('active');
+                processBtn.disabled = false;
+                alert('Error: ' + error);
+            });
+        });
+
+        resetBtn.addEventListener('click', resetAll);
+        newBtn.addEventListener('click', resetAll);
+
+        function resetAll() {
+            preview.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+            dropZone.style.display = 'block';
+            loader.classList.remove('active');
+            currentFile = null;
+            fileInput.value = '';
+            processBtn.disabled = false;
+        }
+    </script>
+</body>
+</html>
