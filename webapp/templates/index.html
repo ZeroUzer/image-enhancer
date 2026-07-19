@@ -147,7 +147,7 @@
         }
 
         .thumb-item {
-            width: 100px;
+            width: 120px;
             cursor: pointer;
             border-radius: 10px;
             border: 2.5px solid transparent;
@@ -169,7 +169,7 @@
 
         .thumb-item img {
             width: 100%;
-            height: 70px;
+            height: 80px;
             object-fit: cover;
             display: block;
             background: #e9edf4;
@@ -208,6 +208,16 @@
         .thumb-item .thumb-status.error {
             background: #fee2e2;
             color: #dc2626;
+        }
+
+        .thumb-item .thumb-status.uploading {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .thumb-item .thumb-status.queued {
+            background: #e0f2fe;
+            color: #0284c7;
         }
 
         .thumb-item .remove-thumb {
@@ -252,6 +262,14 @@
             padding: 10px 0;
             width: 100%;
             text-align: center;
+        }
+
+        .thumb-item .upload-progress {
+            font-size: 8px;
+            color: #d97706;
+            text-align: center;
+            background: #fef3c7;
+            padding: 0 4px;
         }
 
         /* Превью "было / стало" */
@@ -419,8 +437,8 @@
             .header-content { flex-direction: column; align-items: flex-start; }
             .card { padding: 20px 12px 24px; }
             .upload-area { padding: 24px 12px; }
-            .thumb-item { width: 70px; }
-            .thumb-item img { height: 50px; }
+            .thumb-item { width: 90px; }
+            .thumb-item img { height: 60px; }
             .comparison figure { flex: 1 1 100%; max-width: 100%; }
             .btn { padding: 8px 18px; font-size: 14px; }
         }
@@ -516,7 +534,6 @@
             let selectedId = null;
             let processing = false;
 
-            // ---- Загрузка ----
             function openPicker() { fileInput.click(); }
             dropZone.addEventListener('click', openPicker);
 
@@ -570,24 +587,41 @@
                     file: file,
                     name: file.name,
                     size: file.size,
-                    status: 'pending',
+                    status: 'uploading', // uploading, queued, processing, done, error
                     progress: 0,
                     resultUrl: null,
                     coeffs: null,
                     error: null,
                     taskId: null,
-                    thumb: null
+                    thumb: null,
+                    uploadProgress: 0
                 };
 
+                // Читаем файл для миниатюры
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     entry.thumb = e.target.result;
+                    // После загрузки миниатюры меняем статус на queued
+                    entry.status = 'queued';
                     renderAll();
                     if (files.length === 1) {
                         selectFile(entry.id);
                     }
                 };
                 reader.readAsDataURL(file);
+
+                // Симулируем прогресс загрузки
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 10 + 5;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        // Статус уже установлен в reader.onload
+                    }
+                    entry.uploadProgress = Math.min(progress, 100);
+                    renderAll();
+                }, 100);
 
                 files.push(entry);
                 renderAll();
@@ -630,7 +664,6 @@
                 renderAll();
             }
 
-            // ---- Выбор файла ----
             function selectFile(id) {
                 const entry = files.find(f => f.id === id);
                 if (!entry) return;
@@ -639,11 +672,11 @@
 
                 previewName.textContent = entry.name;
                 const statusMap = {
-                    'pending': 'Ожидание',
+                    'uploading': 'Загрузка...',
+                    'queued': 'В очереди',
                     'processing': 'Обработка...',
                     'done': 'Готово',
-                    'error': 'Ошибка',
-                    'aborted': 'Отменено'
+                    'error': 'Ошибка'
                 };
                 previewStatus.textContent = 'Статус: ' + (statusMap[entry.status] || entry.status);
 
@@ -674,9 +707,7 @@
                 previewBox.classList.remove('hidden');
             }
 
-            // ---- Отрисовка ----
             function renderAll() {
-                // Миниатюры
                 if (files.length === 0) {
                     thumbStrip.innerHTML = '<div class="empty">Нет загруженных изображений</div>';
                     return;
@@ -688,9 +719,16 @@
                     let statusText = '';
                     let statusClass = '';
                     let progressHtml = '';
-                    if (f.status === 'pending') {
-                        statusText = 'Ожидание';
-                        statusClass = '';
+                    let uploadProgressHtml = '';
+
+                    if (f.status === 'uploading') {
+                        statusText = 'Загрузка ' + Math.round(f.uploadProgress) + '%';
+                        statusClass = 'uploading';
+                        uploadProgressHtml = '<div class="upload-progress">' + Math.round(f.uploadProgress) +
+                            '%</div>';
+                    } else if (f.status === 'queued') {
+                        statusText = 'В очереди';
+                        statusClass = 'queued';
                     } else if (f.status === 'processing') {
                         statusText = f.progress + '%';
                         statusClass = 'processing';
@@ -702,9 +740,6 @@
                     } else if (f.status === 'error') {
                         statusText = 'Ошибка';
                         statusClass = 'error';
-                    } else if (f.status === 'aborted') {
-                        statusText = 'Отменено';
-                        statusClass = '';
                     }
 
                     const thumbSrc = f.thumb || '';
@@ -714,13 +749,13 @@
                         '<div class="thumb-label">' + f.name.substr(0, 14) + (f.name.length > 14 ? '…' : '') +
                         '</div>' +
                         '<div class="thumb-status ' + statusClass + '">' + statusText + '</div>' +
+                        uploadProgressHtml +
                         progressHtml +
                         '</div>';
                 });
 
                 thumbStrip.innerHTML = html;
 
-                // Клик по миниатюре
                 document.querySelectorAll('.thumb-item').forEach(el => {
                     el.addEventListener('click', function(e) {
                         const id = this.getAttribute('data-id');
@@ -728,7 +763,6 @@
                     });
                 });
 
-                // Удаление
                 document.querySelectorAll('.remove-thumb').forEach(btn => {
                     btn.addEventListener('click', function(e) {
                         e.stopPropagation();
@@ -737,8 +771,7 @@
                     });
                 });
 
-                // Кнопка "Обработать все"
-                const hasPending = files.some(f => f.status === 'pending');
+                const hasPending = files.some(f => f.status === 'queued' || f.status === 'uploading');
                 const hasProcessing = files.some(f => f.status === 'processing');
                 processAllBtn.disabled = !hasPending || hasProcessing || processing;
             }
@@ -746,7 +779,7 @@
             // ---- Обработка ----
             processAllBtn.addEventListener('click', function() {
                 if (processing) return;
-                const pending = files.filter(f => f.status === 'pending');
+                const pending = files.filter(f => f.status === 'queued');
                 if (pending.length === 0) {
                     alert('Нет файлов для обработки.');
                     return;
@@ -758,7 +791,7 @@
             function processNext() {
                 let next = null;
                 for (let i = 0; i < files.length; i++) {
-                    if (files[i].status === 'pending') {
+                    if (files[i].status === 'queued') {
                         next = files[i];
                         break;
                     }
@@ -839,7 +872,8 @@
                             processNext();
                         } else if (data.status === 'aborted') {
                             clearInterval(timer);
-                            entry.status = 'aborted';
+                            entry.status = 'error';
+                            entry.error = 'Aborted';
                             renderAll();
                             if (selectedId === entry.id) selectFile(entry.id);
                             processNext();
@@ -856,34 +890,7 @@
                 }, 1000);
             }
 
-            // ---- Кнопки ----
             clearAllBtn.addEventListener('click', clearAll);
-
-            // Обновление превью при смене статуса
-            const origSelect = selectFile;
-            selectFile = function(id) {
-                origSelect(id);
-                const entry = files.find(f => f.id === id);
-                if (entry) {
-                    const statusMap = {
-                        'pending': 'Ожидание',
-                        'processing': 'Обработка...',
-                        'done': 'Готово',
-                        'error': 'Ошибка',
-                        'aborted': 'Отменено'
-                    };
-                    previewStatus.textContent = 'Статус: ' + (statusMap[entry.status] || entry.status);
-                }
-            };
-
-            // Автовыбор первого файла при загрузке
-            const origAdd = addFile;
-            addFile = function(file) {
-                origAdd(file);
-                if (files.length === 1) {
-                    selectFile(files[0].id);
-                }
-            };
 
         })();
     </script>
