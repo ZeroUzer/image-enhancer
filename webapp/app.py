@@ -26,7 +26,9 @@ db = SQLAlchemy(app)
 UPLOAD_FOLDER = 'uploads'
 STATIC_FOLDER = 'static'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp', 'tiff', 'tif', 'webp', 'jfif'}
-MODEL_PATH = r'Z:\image_enhancer\models\enhancer_model.keras'
+
+# Путь к модели — теперь относительный
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'enhancer_model.keras')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -63,7 +65,7 @@ print("Loading model...")
 model = tf.keras.models.load_model(MODEL_PATH)
 print("Model loaded")
 
-# Очередь задач (простая)
+# Очередь задач
 task_queue = []
 queue_lock = threading.Lock()
 
@@ -71,6 +73,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def read_image(filepath):
+    """Читает изображение из файла"""
     try:
         img = cv2.imread(filepath)
         if img is not None:
@@ -84,6 +87,7 @@ def read_image(filepath):
         return None
 
 def enhance_image(original_img):
+    """Применяет модель и возвращает улучшенное изображение и коэффициенты"""
     small = cv2.resize(original_img, (128, 128)) / 255.0
     coeffs = model.predict(small.reshape(1, 128, 128, 3), verbose=0)[0]
     
@@ -109,12 +113,9 @@ def process_task(task_id):
         if not task:
             return
         
-        # Обновляем статус
         task.status = 'processing'
         task.progress = 0
         db.session.commit()
-        
-        # Шлём событие
         socketio.emit('task_update', task.to_dict(), room=task_id)
         
         try:
@@ -156,7 +157,6 @@ def process_task(task_id):
             db.session.commit()
             socketio.emit('task_update', task.to_dict(), room=task_id)
         finally:
-            # Освобождаем место в очереди
             with queue_lock:
                 if task_id in task_queue:
                     task_queue.remove(task_id)
@@ -198,7 +198,6 @@ def create_task():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
     file.save(filepath)
     
-    # Сохраняем в БД
     task = Task(
         id=task_id,
         filename=unique_name,
@@ -208,7 +207,6 @@ def create_task():
     db.session.add(task)
     db.session.commit()
     
-    # Добавляем в очередь
     with queue_lock:
         task_queue.append(task_id)
     
@@ -229,7 +227,6 @@ def abort_task(task_id):
     if task.status in ['done', 'error']:
         return jsonify({'error': 'Task already finished'}), 400
     
-    # Удаляем из очереди
     with queue_lock:
         if task_id in task_queue:
             task_queue.remove(task_id)
@@ -237,7 +234,6 @@ def abort_task(task_id):
     task.status = 'aborted'
     db.session.commit()
     
-    # Удаляем файл
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], task.filename)
     if os.path.exists(filepath):
         os.remove(filepath)
@@ -262,7 +258,7 @@ def get_result(task_id):
 def get_static(filename):
     return send_file(os.path.join(STATIC_FOLDER, filename))
 
-# WebSocket соединение
+# WebSocket
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
@@ -275,7 +271,9 @@ def handle_disconnect():
 def handle_subscribe(data):
     task_id = data.get('task_id')
     if task_id:
-        emit('task_update', Task.query.get(task_id).to_dict() if Task.query.get(task_id) else {})
+        task = Task.query.get(task_id)
+        if task:
+            emit('task_update', task.to_dict())
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
