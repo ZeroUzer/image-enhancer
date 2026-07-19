@@ -62,6 +62,11 @@ with app.app_context():
 
 # Загружаем модель
 print("Loading model...")
+print(f"Model path: {MODEL_PATH}")
+if os.path.exists(MODEL_PATH):
+    print("Model file found.")
+else:
+    print("ERROR: Model file NOT found!")
 model = tf.keras.models.load_model(MODEL_PATH)
 print("Model loaded")
 
@@ -73,7 +78,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def read_image(filepath):
-    """Читает изображение из файла"""
     try:
         img = cv2.imread(filepath)
         if img is not None:
@@ -87,7 +91,6 @@ def read_image(filepath):
         return None
 
 def enhance_image(original_img):
-    """Применяет модель и возвращает улучшенное изображение и коэффициенты"""
     small = cv2.resize(original_img, (128, 128)) / 255.0
     coeffs = model.predict(small.reshape(1, 128, 128, 3), verbose=0)[0]
     
@@ -107,10 +110,11 @@ def enhance_image(original_img):
     return result, coeffs
 
 def process_task(task_id):
-    """Фоновая обработка задачи из очереди"""
     with app.app_context():
+        print(f"Processing task {task_id}")
         task = Task.query.get(task_id)
         if not task:
+            print(f"Task {task_id} not found in DB")
             return
         
         task.status = 'processing'
@@ -120,6 +124,7 @@ def process_task(task_id):
         
         try:
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], task.filename)
+            print(f"Reading file: {filepath}")
             original = read_image(filepath)
             if original is None:
                 raise Exception("Could not read image")
@@ -127,8 +132,10 @@ def process_task(task_id):
             task.progress = 30
             db.session.commit()
             socketio.emit('task_update', task.to_dict(), room=task_id)
+            print(f"Task {task_id}: image read, progress 30%")
             
             enhanced, coeffs = enhance_image(original)
+            print(f"Task {task_id}: image enhanced")
             
             task.progress = 80
             db.session.commit()
@@ -137,6 +144,7 @@ def process_task(task_id):
             result_filename = f"enhanced_{uuid.uuid4().hex}.jpg"
             result_path = os.path.join(STATIC_FOLDER, result_filename)
             cv2.imwrite(result_path, cv2.cvtColor(enhanced, cv2.COLOR_RGB2BGR))
+            print(f"Task {task_id}: result saved to {result_path}")
             
             os.remove(filepath)
             
@@ -150,8 +158,10 @@ def process_task(task_id):
             })
             db.session.commit()
             socketio.emit('task_update', task.to_dict(), room=task_id)
+            print(f"Task {task_id}: done")
             
         except Exception as e:
+            print(f"Task {task_id} error: {str(e)}")
             task.status = 'error'
             task.error = str(e)
             db.session.commit()
@@ -162,12 +172,13 @@ def process_task(task_id):
                     task_queue.remove(task_id)
 
 def queue_worker():
-    """Постоянно работает в фоне, забирает задачи из очереди"""
+    print("Queue worker started")
     while True:
         task_id = None
         with queue_lock:
             if task_queue:
                 task_id = task_queue.pop(0)
+                print(f"Queue worker: picked task {task_id}, queue size: {len(task_queue)}")
         
         if task_id:
             process_task(task_id)
@@ -175,8 +186,10 @@ def queue_worker():
             time.sleep(0.5)
 
 # Запускаем воркер
+time.sleep(1)  # Даём время на инициализацию
 worker_thread = threading.Thread(target=queue_worker, daemon=True)
 worker_thread.start()
+print("Worker thread started")
 
 @app.route('/')
 def index():
@@ -197,6 +210,7 @@ def create_task():
     unique_name = f"{task_id}_{filename}"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
     file.save(filepath)
+    print(f"Task {task_id}: file saved to {filepath}")
     
     task = Task(
         id=task_id,
@@ -206,9 +220,11 @@ def create_task():
     )
     db.session.add(task)
     db.session.commit()
+    print(f"Task {task_id}: created in DB")
     
     with queue_lock:
         task_queue.append(task_id)
+        print(f"Task {task_id}: added to queue, queue size: {len(task_queue)}")
     
     return jsonify({'task_id': task_id})
 
@@ -258,7 +274,6 @@ def get_result(task_id):
 def get_static(filename):
     return send_file(os.path.join(STATIC_FOLDER, filename))
 
-# WebSocket
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
@@ -276,4 +291,5 @@ def handle_subscribe(data):
             emit('task_update', task.to_dict())
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+    port = int(os.environ.get('PORT', 5000))
+    socketio.run(app, debug=True, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
