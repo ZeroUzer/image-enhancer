@@ -56,6 +56,23 @@
             margin-top: 2px;
         }
 
+        .nav a {
+            color: #3b7cff;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 40px;
+            transition: background 0.2s;
+        }
+
+        .nav a:hover {
+            background: #eef2ff;
+        }
+
+        .nav a.active {
+            background: #eef2ff;
+        }
+
         .badge {
             background: #eef2ff;
             color: #3b7cff;
@@ -80,6 +97,19 @@
             padding: 36px 32px 40px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
             border: 1px solid #f1f5f9;
+        }
+
+        .card .description {
+            color: #475569;
+            max-width: 700px;
+            margin: 0 auto 24px;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .card .description strong {
+            color: #1e293b;
         }
 
         .upload-area {
@@ -427,20 +457,57 @@
             margin-top: 20px;
         }
 
+        .footer a {
+            color: #3b7cff;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
         .hidden {
             display: none !important;
         }
-        .mt-12 { margin-top: 12px; }
-        .flex-center { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .mt-12 {
+            margin-top: 12px;
+        }
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
 
         @media (max-width: 600px) {
-            .header-content { flex-direction: column; align-items: flex-start; }
-            .card { padding: 20px 12px 24px; }
-            .upload-area { padding: 24px 12px; }
-            .thumb-item { width: 90px; }
-            .thumb-item img { height: 60px; }
-            .comparison figure { flex: 1 1 100%; max-width: 100%; }
-            .btn { padding: 8px 18px; font-size: 14px; }
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .card {
+                padding: 20px 12px 24px;
+            }
+            .upload-area {
+                padding: 24px 12px;
+            }
+            .thumb-item {
+                width: 90px;
+            }
+            .thumb-item img {
+                height: 60px;
+            }
+            .comparison figure {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+            .btn {
+                padding: 8px 18px;
+                font-size: 14px;
+            }
+            .nav a {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -452,12 +519,21 @@
                 <h1>Image<span>Enhancer</span></h1>
                 <p>Автоматическая коррекция изображений</p>
             </div>
+            <div class="nav">
+                <a href="/" class="active">Главная</a>
+                <a href="/about">О проекте</a>
+            </div>
             <div class="badge">ML + Computer Vision</div>
         </div>
     </header>
 
     <main class="main">
         <div class="card">
+
+            <p class="description">
+                Модель обучена на датасете пейзажей и автоматически улучшает <strong>яркость</strong>, <strong>контраст</strong> и <strong>цветность</strong>.
+                Лучше всего работает с природными сценами.
+            </p>
 
             <!-- Зона загрузки -->
             <div class="upload-area" id="dropZone">
@@ -506,7 +582,7 @@
     </main>
 
     <footer class="footer">
-        <p>© 2026 ImageEnhancer · Обработка выполняется на стороне сервера с использованием нейросетевой модели</p>
+        <p>© 2026 ImageEnhancer · <a href="https://github.com/ZeroUzer/image-enhancer" target="_blank">GitHub</a></p>
     </footer>
 
     <script>
@@ -587,7 +663,7 @@
                     file: file,
                     name: file.name,
                     size: file.size,
-                    status: 'uploading', // uploading, queued, processing, done, error
+                    status: 'uploading',
                     progress: 0,
                     resultUrl: null,
                     coeffs: null,
@@ -597,11 +673,9 @@
                     uploadProgress: 0
                 };
 
-                // Читаем файл для миниатюры
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     entry.thumb = e.target.result;
-                    // После загрузки миниатюры меняем статус на queued
                     entry.status = 'queued';
                     renderAll();
                     if (files.length === 1) {
@@ -610,14 +684,12 @@
                 };
                 reader.readAsDataURL(file);
 
-                // Симулируем прогресс загрузки
                 let progress = 0;
                 const interval = setInterval(() => {
                     progress += Math.random() * 10 + 5;
                     if (progress >= 100) {
                         progress = 100;
                         clearInterval(interval);
-                        // Статус уже установлен в reader.onload
                     }
                     entry.uploadProgress = Math.min(progress, 100);
                     renderAll();
