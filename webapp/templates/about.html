@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>О проекте — Image Enhancer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 20px 0;
+        }
+        .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .logo h1 {
+            font-size: 26px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .logo span { color: #3b7cff; }
+        .logo p { font-size: 14px; color: #64748b; }
+        .nav a {
+            color: #3b7cff;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 40px;
+            transition: background 0.2s;
+        }
+        .nav a:hover { background: #eef2ff; }
+        .main {
+            flex: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            width: 100%;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px 48px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid #f1f5f9;
+        }
+        h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 28px 0 12px; color: #0f172a; }
+        p { line-height: 1.7; color: #475569; margin-bottom: 12px; }
+        ul { margin: 12px 0 16px 24px; color: #475569; line-height: 1.8; }
+        .tag {
+            display: inline-block;
+            background: #f1f5f9;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 13px;
+            color: #1e293b;
+            margin-right: 6px;
+        }
+        .footer {
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            padding: 18px 24px;
+            text-align: center;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .footer a { color: #3b7cff; text-decoration: none; }
+        @media (max-width: 600px) {
+            .card { padding: 24px 16px; }
+            .header-content { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-content">
+        <div class="logo">
+            <h1>Image<span>Enhancer</span></h1>
+            <p>Автоматическая коррекция изображений</p>
+        </div>
+        <div class="nav">
+            <a href="/">Главная</a>
+            <a href="/about" style="background:#eef2ff;">О проекте</a>
+        </div>
+    </div>
+</header>
+
+<main class="main">
+    <div class="card">
+        <h1>О проекте</h1>
+        <p style="font-size: 18px; color: #1e293b; margin-bottom: 24px;">
+            Image Enhancer — это веб-сервис, который автоматически улучшает яркость, контраст и цветность изображений с помощью нейросети.
+        </p>
+
+        <h2>Как это работает</h2>
+        <p>
+            Модель анализирует уменьшенную копию изображения (128×128 пикселей) и предсказывает три коэффициента — насколько нужно изменить яркость, контраст и насыщенность. Затем эти коэффициенты применяются к исходному изображению в полном разрешении.
+        </p>
+        <p>
+            В отличие от классических фильтров, нейросеть обучалась на тысячах пейзажных фотографий и научилась подбирать параметры индивидуально для каждого снимка.
+        </p>
+
+        <h2>На каком датасете обучалась модель</h2>
+        <p>
+            Обучение проводилось на датасете <strong>Landscape Pictures</strong> с Kaggle.
+        </p>
+        <ul>
+            <li><strong>Источник:</strong> <a href="https://www.kaggle.com/datasets/arnaud58/landscape-pictures" target="_blank">Landscape Pictures</a></li>
+            <li><strong>Формат:</strong> JPG</li>
+            <li><strong>Количество изображений:</strong> 4 319</li>
+            <li><strong>Содержание:</strong> фотографии природных ландшафтов — горы, леса, моря, пустыни, пляжи, острова</li>
+        </ul>
+
+        <h2>Что улучшает модель</h2>
+        <ul>
+            <li><strong>Яркость</strong> — осветляет тёмные участки, не пересвечивая светлые</li>
+            <li><strong>Контраст</strong> — делает изображение более глубоким и выразительным</li>
+            <li><strong>Цветность (насыщенность)</strong> — добавляет сочность цвета, но без неестественных оттенков</li>
+        </ul>
+
+        <h2>Технологии</h2>
+        <p>
+            <span class="tag">Python</span>
+            <span class="tag">Flask</span>
+            <span class="tag">TensorFlow</span>
+            <span class="tag">TensorFlow Lite</span>
+            <span class="tag">OpenCV</span>
+            <span class="tag">SQLite</span>
+            <span class="tag">WebSocket</span>
+        </p>
+
+        <h2>Форматы</h2>
+        <p>Поддерживаются: <strong>JPG, PNG, BMP, TIFF, WEBP, JFIF</strong>.</p>
+        <p style="margin-top: 12px; font-size: 14px; color: #94a3b8;">
+            Модель обучена на пейзажах, поэтому лучше всего работает с природными сценами. Для портретов может давать менее точный результат — это связано с составом обучающей выборки.
+        </p>
+    </div>
+</main>
+
+<footer class="footer">
+    <p>© 2026 ImageEnhancer · <a href="https://github.com/ZeroUzer/image-enhancer" target="_blank">GitHub</a></p>
+</footer>
+
+</body>
+</html>

@@ -27,8 +27,8 @@ UPLOAD_FOLDER = 'uploads'
 STATIC_FOLDER = 'static'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp', 'tiff', 'tif', 'webp', 'jfif'}
 
-# Путь к модели — теперь относительный
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'enhancer_model.keras')
+# Путь к TFLite-модели
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'enhancer_model.tflite')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -60,17 +60,23 @@ class Task(db.Model):
 with app.app_context():
     db.create_all()
 
-# Загружаем модель
-print("Loading model...")
-print(f"Model path: {MODEL_PATH}")
-if os.path.exists(MODEL_PATH):
-    print("Model file found.")
-else:
-    print("ERROR: Model file NOT found!")
-model = tf.keras.models.load_model(MODEL_PATH)
-print("Model loaded")
+# --- ЛЕНИВАЯ ЗАГРУЗКА TFLite ---
+_interpreter = None
+_input_details = None
+_output_details = None
 
-# Очередь задач
+def get_interpreter():
+    global _interpreter, _input_details, _output_details
+    if _interpreter is None:
+        print("Loading TFLite model...")
+        _interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+        _interpreter.allocate_tensors()
+        _input_details = _interpreter.get_input_details()
+        _output_details = _interpreter.get_output_details()
+        print("TFLite model loaded")
+    return _interpreter, _input_details, _output_details
+
+# --- ОЧЕРЕДЬ ЗАДАЧ ---
 task_queue = []
 queue_lock = threading.Lock()
 
@@ -91,8 +97,14 @@ def read_image(filepath):
         return None
 
 def enhance_image(original_img):
+    interpreter, input_details, output_details = get_interpreter()
+    
     small = cv2.resize(original_img, (128, 128)) / 255.0
-    coeffs = model.predict(small.reshape(1, 128, 128, 3), verbose=0)[0]
+    input_data = np.expand_dims(small, axis=0).astype(np.float32)
+    
+    interpreter.set_tensor(input_details[0]['index'], input_data)
+    interpreter.invoke()
+    coeffs = interpreter.get_tensor(output_details[0]['index'])[0]
     
     k_brightness = 0.5 + coeffs[0] * 1.5
     k_contrast = 0.5 + coeffs[1] * 1.5
@@ -114,7 +126,7 @@ def process_task(task_id):
         print(f"Processing task {task_id}")
         task = Task.query.get(task_id)
         if not task:
-            print(f"Task {task_id} not found in DB")
+            print(f"Task {task_id} not found")
             return
         
         task.status = 'processing'
@@ -132,10 +144,8 @@ def process_task(task_id):
             task.progress = 30
             db.session.commit()
             socketio.emit('task_update', task.to_dict(), room=task_id)
-            print(f"Task {task_id}: image read, progress 30%")
             
             enhanced, coeffs = enhance_image(original)
-            print(f"Task {task_id}: image enhanced")
             
             task.progress = 80
             db.session.commit()
@@ -144,7 +154,6 @@ def process_task(task_id):
             result_filename = f"enhanced_{uuid.uuid4().hex}.jpg"
             result_path = os.path.join(STATIC_FOLDER, result_filename)
             cv2.imwrite(result_path, cv2.cvtColor(enhanced, cv2.COLOR_RGB2BGR))
-            print(f"Task {task_id}: result saved to {result_path}")
             
             os.remove(filepath)
             
@@ -158,7 +167,7 @@ def process_task(task_id):
             })
             db.session.commit()
             socketio.emit('task_update', task.to_dict(), room=task_id)
-            print(f"Task {task_id}: done")
+            print(f"Task {task_id} done")
             
         except Exception as e:
             print(f"Task {task_id} error: {str(e)}")
@@ -178,15 +187,13 @@ def queue_worker():
         with queue_lock:
             if task_queue:
                 task_id = task_queue.pop(0)
-                print(f"Queue worker: picked task {task_id}, queue size: {len(task_queue)}")
-        
         if task_id:
             process_task(task_id)
         else:
             time.sleep(0.5)
 
 # Запускаем воркер
-time.sleep(1)  # Даём время на инициализацию
+time.sleep(1)
 worker_thread = threading.Thread(target=queue_worker, daemon=True)
 worker_thread.start()
 print("Worker thread started")
@@ -194,6 +201,10 @@ print("Worker thread started")
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
 
 @app.route('/task', methods=['POST'])
 def create_task():
@@ -210,7 +221,7 @@ def create_task():
     unique_name = f"{task_id}_{filename}"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
     file.save(filepath)
-    print(f"Task {task_id}: file saved to {filepath}")
+    print(f"Task {task_id}: file saved")
     
     task = Task(
         id=task_id,
@@ -220,11 +231,9 @@ def create_task():
     )
     db.session.add(task)
     db.session.commit()
-    print(f"Task {task_id}: created in DB")
     
     with queue_lock:
         task_queue.append(task_id)
-        print(f"Task {task_id}: added to queue, queue size: {len(task_queue)}")
     
     return jsonify({'task_id': task_id})
 
@@ -292,4 +301,4 @@ def handle_subscribe(data):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    socketio.run(app, debug=True, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=False, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
