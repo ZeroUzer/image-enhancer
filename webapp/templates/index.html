@@ -2,31 +2,22 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Улучшение изображений</title>
+    <title>Image Enhancer</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
             background: #f0f2f5;
             color: #1e293b;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
-
         .header {
             background: #ffffff;
             border-bottom: 1px solid #e2e8f0;
             padding: 20px 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
-
         .header-content {
             max-width: 1000px;
             margin: 0 auto;
@@ -37,25 +28,9 @@
             flex-wrap: wrap;
             gap: 12px;
         }
-
-        .logo h1 {
-            font-size: 26px;
-            font-weight: 600;
-            color: #0f172a;
-            letter-spacing: -0.3px;
-        }
-
-        .logo span {
-            color: #3b7cff;
-        }
-
-        .logo p {
-            font-size: 14px;
-            color: #64748b;
-            font-weight: 400;
-            margin-top: 2px;
-        }
-
+        .logo h1 { font-size: 26px; font-weight: 600; color: #0f172a; }
+        .logo span { color: #3b7cff; }
+        .logo p { font-size: 14px; color: #64748b; }
         .nav a {
             color: #3b7cff;
             text-decoration: none;
@@ -64,15 +39,8 @@
             border-radius: 40px;
             transition: background 0.2s;
         }
-
-        .nav a:hover {
-            background: #eef2ff;
-        }
-
-        .nav a.active {
-            background: #eef2ff;
-        }
-
+        .nav a:hover { background: #eef2ff; }
+        .nav a.active { background: #eef2ff; }
         .badge {
             background: #eef2ff;
             color: #3b7cff;
@@ -82,7 +50,6 @@
             font-weight: 500;
             border: 1px solid #dbe7fe;
         }
-
         .main {
             flex: 1;
             max-width: 1000px;
@@ -90,16 +57,14 @@
             padding: 32px 24px 40px;
             width: 100%;
         }
-
         .card {
             background: #ffffff;
             border-radius: 16px;
             padding: 36px 32px 40px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
             border: 1px solid #f1f5f9;
         }
-
-        .card .description {
+        .description {
             color: #475569;
             max-width: 700px;
             margin: 0 auto 24px;
@@ -107,11 +72,6 @@
             line-height: 1.6;
             text-align: center;
         }
-
-        .card .description strong {
-            color: #1e293b;
-        }
-
         .upload-area {
             border: 2px dashed #cbd5e1;
             border-radius: 16px;
@@ -121,31 +81,13 @@
             transition: border-color 0.2s, background 0.2s;
             background: #fafbfc;
         }
-
         .upload-area:hover {
             border-color: #3b7cff;
             background: #f8faff;
         }
-
-        .upload-area .icon {
-            font-size: 36px;
-            display: block;
-            margin-bottom: 8px;
-            color: #94a3b8;
-        }
-
-        .upload-area p {
-            font-size: 17px;
-            font-weight: 500;
-            color: #1e293b;
-        }
-
-        .upload-area .hint {
-            font-size: 14px;
-            color: #94a3b8;
-            margin-top: 6px;
-        }
-
+        .upload-area .icon { font-size: 36px; display: block; margin-bottom: 8px; color: #94a3b8; }
+        .upload-area p { font-size: 17px; font-weight: 500; color: #1e293b; }
+        .upload-area .hint { font-size: 14px; color: #94a3b8; margin-top: 6px; }
         .upload-area .formats {
             font-size: 13px;
             color: #94a3b8;
@@ -155,186 +97,30 @@
             border-radius: 40px;
             display: inline-block;
         }
-
         .upload-area .limit {
             font-size: 13px;
             color: #ef4444;
             margin-top: 8px;
         }
-
-        #fileInput {
-            display: none;
-        }
-
-        /* Миниатюры */
-        .thumb-strip {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid #f1f5f9;
-        }
-
-        .thumb-item {
-            width: 120px;
-            cursor: pointer;
-            border-radius: 10px;
-            border: 2.5px solid transparent;
-            overflow: hidden;
-            transition: border-color 0.2s, transform 0.15s;
-            background: #f8fafc;
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .thumb-item:hover {
-            transform: scale(1.03);
-        }
-
-        .thumb-item.active {
-            border-color: #1f6aff;
-            box-shadow: 0 0 0 3px rgba(31, 106, 255, 0.2);
-        }
-
-        .thumb-item img {
-            width: 100%;
-            height: 80px;
-            object-fit: cover;
-            display: block;
-            background: #e9edf4;
-        }
-
-        .thumb-item .thumb-label {
-            font-size: 10px;
-            padding: 2px 6px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            background: #ffffff;
-            color: #1e293b;
-            font-weight: 500;
-        }
-
-        .thumb-item .thumb-status {
-            font-size: 9px;
-            padding: 1px 6px;
-            text-align: center;
-            background: #f1f5f9;
-            color: #64748b;
-        }
-
-        .thumb-item .thumb-status.done {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-
-        .thumb-item .thumb-status.processing {
-            background: #dbe7fe;
-            color: #1f6aff;
-        }
-
-        .thumb-item .thumb-status.error {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .thumb-item .thumb-status.uploading {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .thumb-item .thumb-status.queued {
-            background: #e0f2fe;
-            color: #0284c7;
-        }
-
-        .thumb-item .remove-thumb {
-            position: absolute;
-            top: 2px;
-            right: 4px;
-            background: rgba(0,0,0,0.5);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 12px;
-            cursor: pointer;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .thumb-item .remove-thumb:hover {
-            background: #ef4444;
-        }
-
-        .thumb-item .progress-thumb {
-            height: 3px;
-            background: #e9edf4;
-            border-radius: 0 0 10px 10px;
-            overflow: hidden;
-        }
-
-        .thumb-item .progress-thumb .fill {
-            height: 100%;
-            background: #3b7cff;
-            width: 0%;
-            transition: width 0.3s;
-        }
-
-        .thumb-strip .empty {
-            color: #94a3b8;
-            font-size: 14px;
-            padding: 10px 0;
-            width: 100%;
-            text-align: center;
-        }
-
-        .thumb-item .upload-progress {
-            font-size: 8px;
-            color: #d97706;
-            text-align: center;
-            background: #fef3c7;
-            padding: 0 4px;
-        }
-
-        /* Превью "было / стало" */
+        #fileInput { display: none; }
         .preview-box {
             margin-top: 24px;
             padding-top: 20px;
             border-top: 1px solid #f1f5f9;
         }
-
-        .preview-box .file-name {
-            font-size: 16px;
-            font-weight: 500;
-            color: #0f172a;
-            margin-bottom: 4px;
-        }
-
-        .preview-box .file-status {
-            font-size: 14px;
-            color: #64748b;
-            margin-bottom: 12px;
-        }
-
+        .preview-box .file-name { font-size: 16px; font-weight: 500; color: #0f172a; margin-bottom: 4px; }
+        .preview-box .file-status { font-size: 14px; color: #64748b; margin-bottom: 12px; }
         .comparison {
             display: flex;
             gap: 24px;
             justify-content: center;
             flex-wrap: wrap;
         }
-
         .comparison figure {
             flex: 1 1 200px;
             max-width: 400px;
             margin: 0;
         }
-
         .comparison figcaption {
             font-weight: 500;
             font-size: 14px;
@@ -342,7 +128,6 @@
             margin-bottom: 6px;
             text-align: center;
         }
-
         .comparison img {
             width: 100%;
             border-radius: 12px;
@@ -350,7 +135,6 @@
             background: #f8fafc;
             min-height: 120px;
         }
-
         .coeffs {
             background: #f8fafc;
             padding: 10px 24px;
@@ -362,11 +146,7 @@
             margin: 14px 0 16px;
             border: 1px solid #f1f5f9;
         }
-
-        .coeffs span {
-            color: #3b7cff;
-        }
-
+        .coeffs span { color: #3b7cff; }
         .result-actions {
             display: flex;
             gap: 14px;
@@ -374,7 +154,6 @@
             flex-wrap: wrap;
             margin-top: 6px;
         }
-
         .btn {
             display: inline-block;
             padding: 10px 32px;
@@ -386,67 +165,20 @@
             transition: background 0.15s, transform 0.1s;
             text-decoration: none;
             font-family: inherit;
-            letter-spacing: 0.2px;
         }
-
-        .btn:active {
-            transform: scale(0.97);
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .btn-primary {
-            background: #1f6aff;
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(31, 106, 255, 0.25);
-        }
-        .btn-primary:hover {
-            background: #1351d6;
-        }
-
-        .btn-secondary {
-            background: #f1f5f9;
-            color: #334155;
-        }
-        .btn-secondary:hover {
-            background: #e2e8f0;
-        }
-
-        .btn-danger {
-            background: #ef4444;
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
-        }
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-
-        .btn-success {
-            background: #22c55e;
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
-        }
-        .btn-success:hover {
-            background: #16a34a;
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: #475569;
-            border: 1.5px solid #d1d9e6;
-        }
-        .btn-outline:hover {
-            background: #f8fafc;
-            border-color: #94a3b8;
-        }
-
-        .btn-sm {
-            padding: 6px 16px;
-            font-size: 13px;
-        }
-
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.5; pointer-events: none; }
+        .btn-primary { background: #1f6aff; color: #ffffff; }
+        .btn-primary:hover { background: #1351d6; }
+        .btn-secondary { background: #f1f5f9; color: #334155; }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-outline { background: transparent; color: #475569; border: 1.5px solid #d1d9e6; }
+        .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+        .btn-sm { padding: 6px 16px; font-size: 13px; }
+        .loader { display: none; text-align: center; padding: 20px; }
+        .loader.active { display: block; }
+        .progress-bar { width: 100%; height: 6px; background: #e9edf4; border-radius: 20px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: #3b7cff; width: 0%; transition: width 0.3s; }
         .footer {
             background: #ffffff;
             border-top: 1px solid #e2e8f0;
@@ -454,518 +186,206 @@
             text-align: center;
             font-size: 14px;
             color: #94a3b8;
-            margin-top: 20px;
         }
-
-        .footer a {
-            color: #3b7cff;
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-        .mt-12 {
-            margin-top: 12px;
-        }
-        .flex-center {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
+        .footer a { color: #3b7cff; text-decoration: none; }
+        .hidden { display: none !important; }
+        .flex-center { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         @media (max-width: 600px) {
-            .header-content {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .card {
-                padding: 20px 12px 24px;
-            }
-            .upload-area {
-                padding: 24px 12px;
-            }
-            .thumb-item {
-                width: 90px;
-            }
-            .thumb-item img {
-                height: 60px;
-            }
-            .comparison figure {
-                flex: 1 1 100%;
-                max-width: 100%;
-            }
-            .btn {
-                padding: 8px 18px;
-                font-size: 14px;
-            }
-            .nav a {
-                padding: 6px 12px;
-                font-size: 14px;
-            }
+            .header-content { flex-direction: column; align-items: flex-start; }
+            .card { padding: 20px 12px 24px; }
+            .upload-area { padding: 24px 12px; }
+            .comparison figure { flex: 1 1 100%; max-width: 100%; }
+            .btn { padding: 8px 18px; font-size: 14px; }
         }
     </style>
 </head>
 <body>
 
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <h1>Image<span>Enhancer</span></h1>
-                <p>Автоматическая коррекция изображений</p>
-            </div>
-            <div class="nav">
-                <a href="/" class="active">Главная</a>
-                <a href="/about">О проекте</a>
-            </div>
-            <div class="badge">ML + Computer Vision</div>
+<header class="header">
+    <div class="header-content">
+        <div class="logo">
+            <h1>Image<span>Enhancer</span></h1>
+            <p>Автоматическая коррекция изображений</p>
         </div>
-    </header>
-
-    <main class="main">
-        <div class="card">
-
-            <p class="description">
-                Модель обучена на датасете пейзажей и автоматически улучшает <strong>яркость</strong>, <strong>контраст</strong> и <strong>цветность</strong>.
-                Лучше всего работает с природными сценами.
-            </p>
-
-            <!-- Зона загрузки -->
-            <div class="upload-area" id="dropZone">
-                <span class="icon">+</span>
-                <p>Загрузите изображения</p>
-                <p class="hint">Нажмите или перетащите файлы</p>
-                <span class="formats">JPG · PNG · BMP · TIFF · WEBP · JFIF</span>
-                <div class="limit">Максимум 10 файлов</div>
-                <input type="file" id="fileInput" accept="image/*" multiple>
-            </div>
-
-            <!-- Миниатюры -->
-            <div class="thumb-strip" id="thumbStrip">
-                <div class="empty" id="emptyThumbs">Нет загруженных изображений</div>
-            </div>
-
-            <!-- Превью "было / стало" -->
-            <div class="preview-box hidden" id="previewBox">
-                <div class="file-name" id="previewName">—</div>
-                <div class="file-status" id="previewStatus">Статус: ожидание</div>
-                <div class="comparison">
-                    <figure>
-                        <figcaption>Было</figcaption>
-                        <img id="originalImg" alt="До" src="">
-                    </figure>
-                    <figure>
-                        <figcaption>Стало</figcaption>
-                        <img id="resultImg" alt="После" src="">
-                    </figure>
-                </div>
-                <div class="flex-center">
-                    <div class="coeffs" id="coeffsDisplay">
-                        Яркость: <span id="valBright">—</span> &middot;
-                        Контраст: <span id="valContrast">—</span> &middot;
-                        Цветность: <span id="valSaturation">—</span>
-                    </div>
-                </div>
-                <div class="result-actions">
-                    <a id="downloadLink" download="enhanced.jpg" class="btn btn-primary hidden">Скачать</a>
-                    <button class="btn btn-secondary btn-sm" id="processAllBtn">Обработать все</button>
-                    <button class="btn btn-outline btn-sm" id="clearAllBtn">Очистить всё</button>
-                </div>
-            </div>
-
+        <div class="nav">
+            <a href="/" class="active">Главная</a>
+            <a href="/about">О проекте</a>
         </div>
-    </main>
+        <div class="badge">ML + Computer Vision</div>
+    </div>
+</header>
 
-    <footer class="footer">
-        <p>© 2026 ImageEnhancer · <a href="https://github.com/ZeroUzer/image-enhancer" target="_blank">GitHub</a></p>
-    </footer>
+<main class="main">
+    <div class="card">
+        <p class="description">
+            Модель обучена на датасете пейзажей и автоматически улучшает фото. Лучше всего работает с природными сценами.
+        </p>
 
-    <script>
-        (function() {
+        <div class="upload-area" id="dropZone">
+            <span class="icon">+</span>
+            <p>Загрузите изображение</p>
+            <p class="hint">Нажмите или перетащите файл</p>
+            <span class="formats">JPG · PNG · BMP · TIFF · WEBP · JFIF</span>
+            <div class="limit">Максимум 1 файл</div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
 
-            const MAX_FILES = 10;
+        <div class="loader" id="loader">
+            <p>Обработка...</p>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <p id="progressText">0%</p>
+        </div>
 
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('fileInput');
-            const thumbStrip = document.getElementById('thumbStrip');
-            const emptyThumbs = document.getElementById('emptyThumbs');
-            const previewBox = document.getElementById('previewBox');
-            const previewName = document.getElementById('previewName');
-            const previewStatus = document.getElementById('previewStatus');
-            const originalImg = document.getElementById('originalImg');
-            const resultImg = document.getElementById('resultImg');
-            const valBright = document.getElementById('valBright');
-            const valContrast = document.getElementById('valContrast');
-            const valSaturation = document.getElementById('valSaturation');
-            const downloadLink = document.getElementById('downloadLink');
-            const processAllBtn = document.getElementById('processAllBtn');
-            const clearAllBtn = document.getElementById('clearAllBtn');
+        <div class="preview-box hidden" id="previewBox">
+            <div class="file-name" id="previewName">—</div>
+            <div class="file-status" id="previewStatus">Статус: ожидание</div>
+            <div class="comparison">
+                <figure>
+                    <figcaption>Было</figcaption>
+                    <img id="originalImg" alt="До">
+                </figure>
+                <figure>
+                    <figcaption>Стало</figcaption>
+                    <img id="resultImg" alt="После">
+                </figure>
+            </div>
+            <div class="flex-center">
+                <div class="coeffs">
+                    Яркость: <span id="valBright">—</span> &middot;
+                    Контраст: <span id="valContrast">—</span> &middot;
+                    Цветность: <span id="valSaturation">—</span>
+                </div>
+            </div>
+            <div class="result-actions">
+                <a id="downloadLink" download="enhanced.jpg" class="btn btn-primary hidden">Скачать</a>
+                <button class="btn btn-outline btn-sm" id="clearBtn">Очистить</button>
+            </div>
+        </div>
+    </div>
+</main>
 
-            let files = [];
-            let selectedId = null;
-            let processing = false;
+<footer class="footer">
+    <p>© 2026 ImageEnhancer · <a href="https://github.com/ArseniiIvanov/image-enhancer" target="_blank">GitHub</a></p>
+</footer>
 
-            function openPicker() { fileInput.click(); }
-            dropZone.addEventListener('click', openPicker);
+<script>
+    (function() {
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewBox = document.getElementById('previewBox');
+        const previewName = document.getElementById('previewName');
+        const previewStatus = document.getElementById('previewStatus');
+        const originalImg = document.getElementById('originalImg');
+        const resultImg = document.getElementById('resultImg');
+        const valBright = document.getElementById('valBright');
+        const valContrast = document.getElementById('valContrast');
+        const valSaturation = document.getElementById('valSaturation');
+        const downloadLink = document.getElementById('downloadLink');
+        const clearBtn = document.getElementById('clearBtn');
+        const loader = document.getElementById('loader');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
 
-            fileInput.addEventListener('change', function(e) {
-                if (this.files && this.files.length > 0) {
-                    for (let i = 0; i < this.files.length; i++) {
-                        addFile(this.files[i]);
-                    }
-                }
-                this.value = '';
-            });
+        let currentFile = null;
 
-            dropZone.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                this.style.borderColor = '#1f6aff';
-                this.style.background = '#f5f9ff';
-            });
-            dropZone.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                this.style.borderColor = '#cbd5e1';
-                this.style.background = '#fafbfc';
-            });
-            dropZone.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.style.borderColor = '#cbd5e1';
-                this.style.background = '#fafbfc';
-                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    for (let i = 0; i < e.dataTransfer.files.length; i++) {
-                        addFile(e.dataTransfer.files[i]);
-                    }
-                }
-            });
+        function openPicker() { fileInput.click(); }
+        dropZone.addEventListener('click', openPicker);
 
-            function addFile(file) {
-                if (!file.type.startsWith('image/')) {
-                    alert('Файл "' + file.name + '" не является изображением.');
-                    return;
-                }
-                if (files.length >= MAX_FILES) {
-                    alert('Максимум ' + MAX_FILES + ' файлов.');
-                    return;
-                }
-                const exists = files.some(f => f.name === file.name && f.size === file.size);
-                if (exists) {
-                    alert('Файл "' + file.name + '" уже добавлен.');
-                    return;
-                }
-
-                const entry = {
-                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-                    file: file,
-                    name: file.name,
-                    size: file.size,
-                    status: 'uploading',
-                    progress: 0,
-                    resultUrl: null,
-                    coeffs: null,
-                    error: null,
-                    taskId: null,
-                    thumb: null,
-                    uploadProgress: 0
-                };
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    entry.thumb = e.target.result;
-                    entry.status = 'queued';
-                    renderAll();
-                    if (files.length === 1) {
-                        selectFile(entry.id);
-                    }
-                };
-                reader.readAsDataURL(file);
-
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += Math.random() * 10 + 5;
-                    if (progress >= 100) {
-                        progress = 100;
-                        clearInterval(interval);
-                    }
-                    entry.uploadProgress = Math.min(progress, 100);
-                    renderAll();
-                }, 100);
-
-                files.push(entry);
-                renderAll();
+        fileInput.addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                handleFile(this.files[0]);
             }
+            this.value = '';
+        });
 
-            function removeFile(id) {
-                if (processing) {
-                    alert('Дождитесь завершения обработки.');
-                    return;
-                }
-                const entry = files.find(f => f.id === id);
-                if (entry && entry.status === 'processing') {
-                    alert('Файл обрабатывается.');
-                    return;
-                }
-                files = files.filter(f => f.id !== id);
-                if (selectedId === id) {
-                    selectedId = null;
-                    previewBox.classList.add('hidden');
-                }
-                renderAll();
-                if (files.length > 0) {
-                    selectFile(files[0].id);
-                }
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#1f6aff';
+            this.style.background = '#f5f9ff';
+        });
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#cbd5e1';
+            this.style.background = '#fafbfc';
+        });
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#cbd5e1';
+            this.style.background = '#fafbfc';
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
             }
+        });
 
-            function clearAll() {
-                if (processing) {
-                    if (!confirm('Остановить обработку и очистить всё?')) return;
-                }
-                files.forEach(f => {
-                    if (f.taskId && f.status === 'processing') {
-                        fetch('/task/' + f.taskId, { method: 'DELETE' }).catch(() => {});
-                    }
-                });
-                files = [];
-                selectedId = null;
-                processing = false;
-                previewBox.classList.add('hidden');
-                renderAll();
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Файл не является изображением.');
+                return;
             }
-
-            function selectFile(id) {
-                const entry = files.find(f => f.id === id);
-                if (!entry) return;
-                selectedId = id;
-                renderAll();
-
-                previewName.textContent = entry.name;
-                const statusMap = {
-                    'uploading': 'Загрузка...',
-                    'queued': 'В очереди',
-                    'processing': 'Обработка...',
-                    'done': 'Готово',
-                    'error': 'Ошибка'
-                };
-                previewStatus.textContent = 'Статус: ' + (statusMap[entry.status] || entry.status);
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    originalImg.src = e.target.result;
-                };
-                reader.readAsDataURL(entry.file);
-
-                if (entry.status === 'done' && entry.resultUrl) {
-                    resultImg.src = entry.resultUrl;
-                    resultImg.style.display = 'block';
-                    const c = entry.coeffs || {};
-                    valBright.textContent = (c.brightness || 0).toFixed(2);
-                    valContrast.textContent = (c.contrast || 0).toFixed(2);
-                    valSaturation.textContent = (c.saturation || 0).toFixed(2);
-                    downloadLink.href = entry.resultUrl;
-                    downloadLink.classList.remove('hidden');
-                } else {
-                    resultImg.src = '';
-                    resultImg.style.display = 'none';
-                    valBright.textContent = '—';
-                    valContrast.textContent = '—';
-                    valSaturation.textContent = '—';
-                    downloadLink.classList.add('hidden');
-                }
-
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                originalImg.src = e.target.result;
                 previewBox.classList.remove('hidden');
-            }
+                previewName.textContent = file.name;
+                previewStatus.textContent = 'Статус: загружено';
+                resultImg.src = '';
+                resultImg.style.display = 'none';
+                valBright.textContent = '—';
+                valContrast.textContent = '—';
+                valSaturation.textContent = '—';
+                downloadLink.classList.add('hidden');
+                loader.classList.remove('active');
+                // Автоматически запускаем обработку
+                processFile(file);
+            };
+            reader.readAsDataURL(file);
+        }
 
-            function renderAll() {
-                if (files.length === 0) {
-                    thumbStrip.innerHTML = '<div class="empty">Нет загруженных изображений</div>';
+        function processFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            loader.classList.add('active');
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+            previewStatus.textContent = 'Статус: загрузка...';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                loader.classList.remove('active');
+                if (data.error) {
+                    alert('Ошибка: ' + data.error);
+                    previewStatus.textContent = 'Статус: ошибка';
                     return;
                 }
-
-                let html = '';
-                files.forEach(f => {
-                    const isActive = f.id === selectedId;
-                    let statusText = '';
-                    let statusClass = '';
-                    let progressHtml = '';
-                    let uploadProgressHtml = '';
-
-                    if (f.status === 'uploading') {
-                        statusText = 'Загрузка ' + Math.round(f.uploadProgress) + '%';
-                        statusClass = 'uploading';
-                        uploadProgressHtml = '<div class="upload-progress">' + Math.round(f.uploadProgress) +
-                            '%</div>';
-                    } else if (f.status === 'queued') {
-                        statusText = 'В очереди';
-                        statusClass = 'queued';
-                    } else if (f.status === 'processing') {
-                        statusText = f.progress + '%';
-                        statusClass = 'processing';
-                        progressHtml = '<div class="progress-thumb"><div class="fill" style="width:' + f.progress +
-                            '%;"></div></div>';
-                    } else if (f.status === 'done') {
-                        statusText = 'Готово';
-                        statusClass = 'done';
-                    } else if (f.status === 'error') {
-                        statusText = 'Ошибка';
-                        statusClass = 'error';
-                    }
-
-                    const thumbSrc = f.thumb || '';
-                    html += '<div class="thumb-item ' + (isActive ? 'active' : '') + '" data-id="' + f.id + '">' +
-                        '<button class="remove-thumb" data-id="' + f.id + '" title="Удалить">×</button>' +
-                        '<img src="' + thumbSrc + '" alt="' + f.name + '" loading="lazy">' +
-                        '<div class="thumb-label">' + f.name.substr(0, 14) + (f.name.length > 14 ? '…' : '') +
-                        '</div>' +
-                        '<div class="thumb-status ' + statusClass + '">' + statusText + '</div>' +
-                        uploadProgressHtml +
-                        progressHtml +
-                        '</div>';
-                });
-
-                thumbStrip.innerHTML = html;
-
-                document.querySelectorAll('.thumb-item').forEach(el => {
-                    el.addEventListener('click', function(e) {
-                        const id = this.getAttribute('data-id');
-                        if (id) selectFile(id);
-                    });
-                });
-
-                document.querySelectorAll('.remove-thumb').forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const id = this.getAttribute('data-id');
-                        removeFile(id);
-                    });
-                });
-
-                const hasPending = files.some(f => f.status === 'queued' || f.status === 'uploading');
-                const hasProcessing = files.some(f => f.status === 'processing');
-                processAllBtn.disabled = !hasPending || hasProcessing || processing;
-            }
-
-            // ---- Обработка ----
-            processAllBtn.addEventListener('click', function() {
-                if (processing) return;
-                const pending = files.filter(f => f.status === 'queued');
-                if (pending.length === 0) {
-                    alert('Нет файлов для обработки.');
-                    return;
-                }
-                processing = true;
-                processNext();
+                previewStatus.textContent = 'Статус: готово';
+                resultImg.src = data.result_url;
+                resultImg.style.display = 'block';
+                const c = data.coefficients || {};
+                valBright.textContent = (c.brightness || 0).toFixed(2);
+                valContrast.textContent = (c.contrast || 0).toFixed(2);
+                valSaturation.textContent = (c.saturation || 0).toFixed(2);
+                downloadLink.href = data.result_url;
+                downloadLink.classList.remove('hidden');
+            })
+            .catch(err => {
+                loader.classList.remove('active');
+                alert('Ошибка: ' + err);
+                previewStatus.textContent = 'Статус: ошибка';
             });
+        }
 
-            function processNext() {
-                let next = null;
-                for (let i = 0; i < files.length; i++) {
-                    if (files[i].status === 'queued') {
-                        next = files[i];
-                        break;
-                    }
-                }
-                if (!next) {
-                    processing = false;
-                    renderAll();
-                    return;
-                }
-
-                const entry = next;
-                entry.status = 'processing';
-                entry.progress = 0;
-                renderAll();
-                if (selectedId === entry.id) selectFile(entry.id);
-
-                const formData = new FormData();
-                formData.append('file', entry.file);
-
-                fetch('/task', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.error) {
-                        entry.status = 'error';
-                        entry.error = data.error;
-                        renderAll();
-                        if (selectedId === entry.id) selectFile(entry.id);
-                        processNext();
-                        return;
-                    }
-                    entry.taskId = data.task_id;
-                    pollStatus(entry);
-                })
-                .catch(err => {
-                    entry.status = 'error';
-                    entry.error = err;
-                    renderAll();
-                    if (selectedId === entry.id) selectFile(entry.id);
-                    processNext();
-                });
-            }
-
-            function pollStatus(entry) {
-                const timer = setInterval(() => {
-                    fetch('/task/' + entry.taskId + '/status')
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.error) {
-                            clearInterval(timer);
-                            entry.status = 'error';
-                            entry.error = data.error;
-                            renderAll();
-                            if (selectedId === entry.id) selectFile(entry.id);
-                            processNext();
-                            return;
-                        }
-                        entry.progress = data.progress || 0;
-                        renderAll();
-                        if (selectedId === entry.id) selectFile(entry.id);
-
-                        if (data.status === 'done') {
-                            clearInterval(timer);
-                            entry.status = 'done';
-                            entry.resultUrl = data.result_url;
-                            entry.coeffs = data.coefficients;
-                            renderAll();
-                            if (selectedId === entry.id) selectFile(entry.id);
-                            processNext();
-                        } else if (data.status === 'error') {
-                            clearInterval(timer);
-                            entry.status = 'error';
-                            entry.error = data.error;
-                            renderAll();
-                            if (selectedId === entry.id) selectFile(entry.id);
-                            processNext();
-                        } else if (data.status === 'aborted') {
-                            clearInterval(timer);
-                            entry.status = 'error';
-                            entry.error = 'Aborted';
-                            renderAll();
-                            if (selectedId === entry.id) selectFile(entry.id);
-                            processNext();
-                        }
-                    })
-                    .catch(err => {
-                        clearInterval(timer);
-                        entry.status = 'error';
-                        entry.error = err;
-                        renderAll();
-                        if (selectedId === entry.id) selectFile(entry.id);
-                        processNext();
-                    });
-                }, 1000);
-            }
-
-            clearAllBtn.addEventListener('click', clearAll);
-
-        })();
-    </script>
-
+        clearBtn.addEventListener('click', function() {
+            currentFile = null;
+            previewBox.classList.add('hidden');
+            loader.classList.remove('active');
+        });
+    })();
+</script>
 </body>
 </html>
