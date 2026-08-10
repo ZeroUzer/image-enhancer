@@ -3,31 +3,36 @@ import cv2
 import numpy as np
 from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
-import tensorflow as tf
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 import uuid
 import time
 from PIL import Image
 import gc
 import sys
+from tflite_runtime.interpreter import Interpreter
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your-secret-key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 CORS(app)
 
 UPLOAD_FOLDER = 'uploads'
 STATIC_FOLDER = 'static'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp', 'tiff', 'tif', 'webp', 'jfif'}
 
-# Путь к TFLite-модели
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'enhancer_model.tflite')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(STATIC_FOLDER, exist_ok=True)
 
+# Загрузка модели (без tf)
 print("Loading TFLite model...")
 try:
-    interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+    interpreter = Interpreter(model_path=MODEL_PATH)
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
@@ -40,7 +45,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def compress_image(filepath, max_pixels=5_000_000):
-    """Сжимает фото до загрузки в память"""
     try:
         img = Image.open(filepath)
         w, h = img.size
@@ -60,6 +64,12 @@ def read_image(filepath):
         img = cv2.imread(filepath)
         if img is None:
             return None
+        h, w = img.shape[:2]
+        if w * h > 8_000_000:
+            scale = (8_000_000 / (w * h)) ** 0.5
+            new_w, new_h = int(w * scale), int(h * scale)
+            img = cv2.resize(img, (new_w, new_h))
+            print(f"Image resized from {w}x{h} to {new_w}x{new_h}")
         return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     except Exception as e:
         print(f"Read error: {e}")
@@ -117,14 +127,11 @@ def upload_file():
         unique_name = f"{uuid.uuid4().hex}_{filename}"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
         
-        # Сохраняем файл
         file.save(filepath)
         print(f"File saved: {filepath}")
         
-        # Сжимаем до обработки
         compress_image(filepath)
         
-        # Читаем изображение
         original = read_image(filepath)
         if original is None:
             os.remove(filepath)
@@ -132,19 +139,15 @@ def upload_file():
         
         print(f"Image shape: {original.shape}")
         
-        # Улучшаем
         enhanced, coeffs = enhance_image(original)
         print("Enhance complete")
         
-        # Сохраняем результат
         result_filename = f"enhanced_{uuid.uuid4().hex}.jpg"
         result_path = os.path.join(STATIC_FOLDER, result_filename)
         cv2.imwrite(result_path, cv2.cvtColor(enhanced, cv2.COLOR_RGB2BGR))
         
-        # Удаляем исходный файл
         os.remove(filepath)
         
-        # Принудительно освобождаем память
         del original
         del enhanced
         gc.collect()
