@@ -10,7 +10,7 @@ import time
 from PIL import Image
 import gc
 import sys
-from tflite_runtime.interpreter import Interpreter
+import tensorflow as tf
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -23,20 +23,17 @@ UPLOAD_FOLDER = 'uploads'
 STATIC_FOLDER = 'static'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp', 'tiff', 'tif', 'webp', 'jfif'}
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'enhancer_model.tflite')
+# Путь к модели — теперь .keras, потому что используем полный TensorFlow
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'enhancer_model.keras')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(STATIC_FOLDER, exist_ok=True)
 
-# Загрузка модели (без tf)
-print("Loading TFLite model...")
+print("Loading model...")
 try:
-    interpreter = Interpreter(model_path=MODEL_PATH)
-    interpreter.allocate_tensors()
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-    print("TFLite model loaded")
+    model = tf.keras.models.load_model(MODEL_PATH)
+    print("Model loaded")
 except Exception as e:
     print(f"ERROR loading model: {e}")
     sys.exit(1)
@@ -77,21 +74,24 @@ def read_image(filepath):
 
 def enhance_image(original_img):
     try:
+        # Уменьшаем для модели
         small = cv2.resize(original_img, (128, 128)) / 255.0
         input_data = np.expand_dims(small, axis=0).astype(np.float32)
         
-        interpreter.set_tensor(input_details[0]['index'], input_data)
-        interpreter.invoke()
-        coeffs = interpreter.get_tensor(output_details[0]['index'])[0]
+        # Предсказание
+        coeffs = model.predict(input_data, verbose=0)[0]
         
+        # Денормализация
         k_brightness = 0.5 + coeffs[0] * 1.5
         k_contrast = 0.5 + coeffs[1] * 1.5
         k_saturation = coeffs[2] * 2.0
         
+        # Применяем к оригинальному изображению
         result = original_img.astype(np.float32) / 255.0
         result = result * k_contrast + (128/255.0) * (1 - k_contrast) + (k_brightness - 1) * 0.5
         result = np.clip(result, 0, 1)
         
+        # Насыщенность через HSV
         hsv = cv2.cvtColor((result * 255).astype(np.uint8), cv2.COLOR_RGB2HSV).astype(np.float32)
         hsv[:, :, 1] = hsv[:, :, 1] * k_saturation
         hsv[:, :, 1] = np.clip(hsv[:, :, 1], 0, 255)
